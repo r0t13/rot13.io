@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html ng-app="rot13">
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>rot13.io</title>
+<meta name="description" content="rot13">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="//netdna.bootstrapcdn.com/bootswatch/3.0.3/slate/bootstrap.min.css" rel="stylesheet">
+<link href="//fonts.googleapis.com/css?family=Cinzel:700" rel="stylesheet">
+<style>
+html,body{
+height:100%;
+}
+body{
+background:url(img/bg.jpg) no-repeat #000;
+background-size:100%;
+font-family:Cinzel,serif;
+}
+#root{
+clear:both;
+height:auto!important;
+height:100%;
+margin:auto;
+margin-bottom:-72px;
+max-width:600px;
+min-height:100%;
+padding:30px;
+}
+#root #root_footer{
+height:72px;
+}
+textarea{
+background:rgba(255,255,255,.75);
+display:block;
+font-size:22px;
+height:300px;
+padding:10px;
+width:100%;
+}
+.btn{
+border-radius:0;
+}
+#footer{
+background-image:-webkit-linear-gradient(rgba(0,0,0,.05),rgba(0,0,0,.5));
+background-image:linear-gradient(rgba(0,0,0,.05),rgba(0,0,0,.5));
+background-repeat:no-repeat;
+clear:both;
+height:72px;
+padding:30px;
+position:relative;
+text-shadow: 0px 1px 2px #000;
+}
+#footer a{
+color:#ddd;
+text-decoration:none!important;
+-webkit-transition: color 0.5s ease;
+transition: color 0.5s ease;
+}
+#footer a:hover{
+color:#fff;
+}
+a.icon{
+font-size:20px;
+}
+@font-face {
+font-family: 'icomoon';
+src:url('fonts/icomoon.eot');
+src:url('fonts/icomoon.eot?#iefix') format('embedded-opentype'),
+url('fonts/icomoon.ttf') format('truetype'),
+url('fonts/icomoon.woff') format('woff'),
+url('fonts/icomoon.svg#icomoon') format('svg');
+font-weight: normal;
+font-style: normal;
+}
+[class^="icon-"], [class*=" icon-"] {
+font-family: 'icomoon';
+speak: none;
+font-style: normal;
+font-weight: normal;
+font-variant: normal;
+text-transform: none;
+line-height: 1;
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+.icon-github:before {
+content: "\e600";
+}
+</style>
+</head>
+
+<body ng-cloak ng-init="i='Put your secret in the box'">
+
+<div id="root">
+<textarea ng-model="i" placeholder="Put your secret in the box" autofocus required></textarea>
+<button class="btn btn-default btn-block btn-lg" ng-click="i=(i|rot13)" ng-disabled="!i">rot13!</button>
+<div id="root_footer"></div>
+</div>
+
+<div id="footer">
+<div class="pull-left"><a href="https://en.wikipedia.org/wiki/Rot13">what is this?</a></div>
+<div class="pull-right"><a href="https://github.com/r0t13/rot13.io" class="icon"><i class="icon-github"></i></a>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.6/angular.min.js"></script>
+<script>(function(){'use strict';
+angular.module('rot13', [])
+.filter('rot13', function(){
+  var a = 'a'.charCodeAt(0),
+      A = 'A'.charCodeAt(0),
+      M = {};
+  for(var i=0; i<26; i++){
+    M[String.fromCharCode(a+i)] = String.fromCharCode(a+((i+13)%26));
+    M[String.fromCharCode(A+i)] = String.fromCharCode(A+((i+13)%26));
+  }
+  return function(s){
+    return s && s.replace(/[A-Za-z]/g, function(c){return M[c];});
+  };
+});}())</script>
+<script>
+(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-46653299-1');ga('send','pageview');
+</script>
+</body>
+</html>
