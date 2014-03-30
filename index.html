@@ -15,7 +15,7 @@ height:100%;
 }
 body{
 background:url(img/bg.jpg) no-repeat #000;
-background-size:100%;
+background-size:cover;
 font-family:Cinzel,serif;
 }
 #root{
@@ -107,10 +107,11 @@ content: "\e600";
 <div class="pull-right"><a href="https://github.com/r0t13/rot13.io" class="icon"><i class="icon-github"></i></a>
 </div>
 
-<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.13/angular.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
 <script>(function(){'use strict';
 angular.module('rot13', [])
 .filter('rot13', function(){
+  /*
   var a = 'a'.charCodeAt(0),
       A = 'A'.charCodeAt(0),
       M = {};
@@ -118,6 +119,8 @@ angular.module('rot13', [])
     M[String.fromCharCode(a+i)] = String.fromCharCode(a+((i+13)%26));
     M[String.fromCharCode(A+i)] = String.fromCharCode(A+((i+13)%26));
   }
+  */
+  var M = {a:'n',A:'N',b:'o',B:'O',c:'p',C:'P',d:'q',D:'Q',e:'r',E:'R',f:'s',F:'S',g:'t',G:'T',h:'u',H:'U',i:'v',I:'V',j:'w',J:'W',k:'x',K:'X',l:'y',L:'Y',m:'z',M:'Z',n:'a',N:'A',o:'b',O:'B',p:'c',P:'C',q:'d',Q:'D',r:'e',R:'E',s:'f',S:'F',t:'g',T:'G',u:'h',U:'H',v:'i',V:'I',w:'j',W:'J',x:'k',X:'K',y:'l',Y:'L',z:'m',Z:'M'};
   return function(s){
     return s && s.replace(/[A-Za-z]/g, function(c){return M[c];});
   };
