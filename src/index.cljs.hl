@@ -1,6 +1,8 @@
 (page "index.html"
   (:require [clojure.string :refer [blank? join]]))
 
+;; see https://github.com/tailrecursion/hoplon/blob/master/src/tailrecursion/hoplon/util.cljs#L22
+;; for a way to do something likes this continuously with polling
 (defc debug? false)
 (with-init!
   (when (= (-> js/window .-location .-search) "?debug")
