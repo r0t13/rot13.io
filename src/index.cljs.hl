@@ -1,12 +1,21 @@
 (page "index.html"
   (:require [clojure.string :refer [blank? join]]))
 
-(def T {\a \n \A \N \b \o \B \O \c \p \C \P \d \q \D \Q \e \r \E \R \f \s \F \S \g \t \G \T \h \u \H \U \i \v \I \V \j \w \J \W \k \x \K \X \l \y \L \Y \m \z \M \Z \n \a \N \A \o \b \O \B \p \c \P \C \q \d \Q \D \r \e \R \E \s \f \S \F \t \g \T \G \u \h \U \H \v \i \V \I \w \j \W \J \x \k \X \K \y \l \Y \L \z \m \Z \M})
-(defn rot13 [s]
-  (join (map #(T % %) s)))
+(def DEBUG false) ; TODO: set via query string
 
-(def placeholder "Put your secret in the box")
-(defc in placeholder)
+(defn make-rot13 [start]
+  (->> (for [from (range 26),
+             :let [to (mod (+ 13 from) 26)]]
+         [(char (+ start from)) (char (+ start to))])
+       (into {})))
+
+(let [table (merge (make-rot13 97) (make-rot13 65))]
+  (defn rot13 [s]
+    (get table s s)))
+
+(def prompt "Put your secret in the box")
+(defc in prompt)
+(defc= out (apply str (map rot13 in)))
 
 (html
   (head
@@ -16,19 +25,21 @@
     (link :rel "stylesheet" :href "https://netdna.bootstrapcdn.com/bootswatch/3.2.0/slate/bootstrap.min.css")
     (link :rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Cinzel:700")
     (link :rel "stylesheet" :href "main.css")
-    (title "rot13.io"))
+    (title "rot13!"))
   (body
     (div :id "root"
       (div
-        (textarea :id "in" :placeholder placeholder :autofocus 1 :required 1
-                  :keyup #(reset! in (val-id "in"))
-                  :value in)
+        (textarea :placeholder prompt :autofocus 1 :required 1
+                  :input #(reset! in (.val (js/jQuery (.-target %))))
+                  :id "in" :value in)
         (button :class "btn btn-primary btn-block btn-lg"
-                :on-click #(reset! in (rot13 @in))
+                :click (fn [_]
+                         (reset! in (identity @out))
+                         (.select (.focus (js/jQuery "#in"))))
                 :disabled (cell= (blank? in))
                 "rot13!"))
-     ;(div (br) (pre (text "[debug]\n~{in}")))
-      (div :id "root_footer"))
+      (if DEBUG (div (br) (pre (text "[debug]\nin: ~{in}\nout: ~{out}")))))
+      (div :id "root_footer")
     (div :id "footer"
       (div :class "pull-left"
         (a :href "https://en.wikipedia.org/wiki/Rot13" "what is this?"))
@@ -36,13 +47,13 @@
         (a :href "https://github.com/r0t13/rot13.io" :class "icon"
           (i :class "icon-github"))))
     (script
-;;{{
-(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-ga('create', 'UA-46653299-1', 'rot13.io');
-ga('require', 'linkid', 'linkid.js');
-ga('send','pageview');
-;;}}
+            ;;{{
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+            ga('create', 'UA-46653299-1', 'rot13.io');
+            ga('require', 'linkid', 'linkid.js');
+            ga('send','pageview');
+            ;;}}
      )))
