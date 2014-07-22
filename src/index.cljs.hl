@@ -35,7 +35,7 @@
     (div :id "root"
       (div
         (textarea :placeholder prompt :autofocus 1 :required 1
-                  :input #(reset! in (.val (js/jQuery (.-target %))))
+                  :input #(reset! in @%)
                   :id "in" :value in)
         (button :class "btn btn-primary btn-block btn-lg"
                 :click #(do (reset! in @out)                         

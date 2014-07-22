@@ -6,7 +6,7 @@
   :project      'rot13.io
   :version      "0.0.0-SNAPSHOT"
   :dependencies '[[tailrecursion/boot.task   "2.2.1"]
-                  [tailrecursion/hoplon      "5.10.13"]]
+                  [tailrecursion/hoplon      "5.10.14"]]
   :out-path     "resources/public"
   :src-paths    #{"src"})
 
