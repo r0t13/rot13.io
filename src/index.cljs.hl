@@ -1,7 +1,12 @@
 (page "index.html"
   (:require [clojure.string :refer [blank? join]]))
 
-(def DEBUG false) ; TODO: set via query string
+;; see https://github.com/tailrecursion/hoplon/blob/master/src/tailrecursion/hoplon/util.cljs#L22
+;; for a way to do something likes this continuously with polling
+(defc debug? false)
+(with-init!
+  (when (= (-> js/window .-location .-search) "?debug")
+    (swap! debug? not)))
 
 (defn make-rot13 [start]
   (->> (for [from (range 26),
@@ -33,12 +38,11 @@
                   :input #(reset! in (.val (js/jQuery (.-target %))))
                   :id "in" :value in)
         (button :class "btn btn-primary btn-block btn-lg"
-                :click (fn [_]
-                         (reset! in (identity @out))
-                         (.select (.focus (js/jQuery "#in"))))
+                :click #(do (reset! in @out)                         
+                            (.select (.focus (js/jQuery "#in"))))
                 :disabled (cell= (blank? in))
                 "rot13!"))
-      (if DEBUG (div (br) (pre (text "[debug]\nin: ~{in}\nout: ~{out}")))))
+      (div :toggle debug? (br) (pre (text "[debug]\nin: ~{in}\nout: ~{out}"))))
       (div :id "root_footer")
     (div :id "footer"
       (div :class "pull-left"
