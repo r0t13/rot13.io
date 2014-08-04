@@ -28,7 +28,8 @@
                         :disabled (cell= (= app-state :encrypting))
                         :input #(do (reset! in @%)
                                     (reset! app-state :awaiting-submit)
-                                    (.autosize $input-el))))
+                                    (.autosize (js/jQuery (.-target %))))))
+
 (def $input-el (js/jQuery input-el))
 
 (defn jq-sel-id [id]
@@ -53,9 +54,11 @@
 (def ^:const qp-in "i")
 (def ^:const qp-debug "debug")
 
+(def encrypt (atom nil))
+
 (defn process-qp-in [value]
-  (do (reset! in (js/decodeURIComponent value))
-      (encrypt)))
+  (reset! in (js/decodeURIComponent value))
+  (@encrypt))
 
 (defn process-qp-debug [value]
   (reset! debug? (contains? #{"t" "true" "1" ""} value)))
@@ -91,13 +94,14 @@
          "text=" uri-encoded
          "&url="  (js/encodeURIComponent (get-permalink)))))
 
-(defn encrypt []
-  (do (reset! permalink (get-permalink))
-      (reset! app-state :encrypting)
-      (reset! in (apply str (map rot13 @in)))
-      (reset! app-state :submitted)
-      (reset! tweet-link (get-tweet-link))
-      (reset! mailto-link (get-mailto-link))))
+(reset! encrypt
+  (fn []
+    (reset! permalink (get-permalink))
+    (reset! app-state :encrypting)
+    (reset! in (apply str (map rot13 @in)))
+    (reset! app-state :submitted)
+    (reset! tweet-link (get-tweet-link))
+    (reset! mailto-link (get-mailto-link))))
 
 ; TODO: rm setTimeout hack
 (defn init-widgets []
@@ -112,25 +116,25 @@
           (reset! can-copy? true)
           (js/ZeroClipboard. (get-by-id cp-button-id)))
 
+
         ; hook up permalink popover and its copy button
         (let [po-el (jq-sel-id permalink-popover-id)]
-          (do
-            (.popover po-el
-                (js-obj
-                  "container" "body"
-                  "content" permalink-popover-content
-                  "html" true
-                  "placement" "bottom"
-                  ))
-            (.on po-el "shown.bs.popover" (fn []
-              (do
-                (.log js/console "show")
-                (.select (jq-sel-id permalink-url-input-id))
-                (if (and (not permalink-cp-inited) @can-copy?)
-                  (let [permalink-cp-button (get-by-id permalink-cp-button-id)]
-                    (do (.log js/console permalink-cp-button)
-                        (js/ZeroClipboard. permalink-cp-button)
-                        (set! permalink-cp-inited true)))))))))))
+          (.popover po-el
+            (js-obj
+              "container" "body"
+              "content" permalink-popover-content
+              "html" true
+              "placement" "bottom"
+              ))
+          (.on po-el "shown.bs.popover"
+            (fn []
+              (.log js/console "show")
+              (.select (jq-sel-id permalink-url-input-id))
+              (if (and (not permalink-cp-inited) @can-copy?)
+                (let [permalink-cp-button (get-by-id permalink-cp-button-id)]
+                  (.log js/console permalink-cp-button)
+                  (js/ZeroClipboard. permalink-cp-button)
+                  (set! permalink-cp-inited true))))))))
 
    500))
 
@@ -164,7 +168,7 @@
         input-el
         (button :class "btn btn-primary btn-lg btn-block"
                 :disabled (cell= (or (= app-state :encrypting) (blank? in)))
-                :click (fn [_] (do (encrypt)
+                :click (fn [_] (do (@encrypt)
                                    (.pushState js/history nil (.-title js/document) @permalink)))
                 (text (get {:encrypting "encrypting..."} app-state "rot13")))
         (div :class "animated btn-group btn-group-sm"
