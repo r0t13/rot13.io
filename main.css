@@ -53,6 +53,10 @@ body {
 	width: 25%;
 }
 
+.btn-group .btn:hover {
+	background-color: rgba(33, 8, 0, .9);
+}
+
 .btn-group .btn .octicon, .btn-group .btn .fa {
 	margin-right: 7px;
 }
