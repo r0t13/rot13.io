@@ -1,0 +1,175 @@
+html, body {
+	height: 100%;
+	min-height: 400px;
+}
+
+body {
+	background: url(bg.jpg) no-repeat;
+	background-size: cover;
+	text-align: center;
+}
+
+#title {
+	color: rgba(251, 250, 244, .3);
+	margin-bottom: 50px;
+	text-shadow: 0 1px 0 rgba(251, 250, 244, .3), 0 -1px 0 rgba(75, 48, 20, .7);
+}
+
+#title h1 {
+	margin: 0;
+}
+
+#main {
+	height: auto!important;
+	margin: auto;
+	max-width: 600px;
+}
+
+.btn {
+	transition: all .25s;
+}
+
+.btn-primary {
+	color: rgba(251, 250, 244, .7);
+	font-size: 28px;
+	margin-bottom: 8px;
+	text-shadow: 0 1px 0 rgba(251, 250, 244, .3), 0 -1px 0 rgba(75, 48, 20, .7);
+}
+
+.btn-primary:valid {
+	opacity: .95;
+}
+
+.btn-group {
+	width: 100%;
+}
+
+.btn-group .btn {
+	background-color: rgba(33, 8, 0, .7);
+	border-color: transparent !important;
+	color: transparent;
+	text-shadow: 0 1px 0 rgba(251, 250, 244, .5);
+	text-transform: uppercase;
+	width: 25%;
+}
+
+.btn-group .btn .octicon, .btn-group .btn .fa {
+	margin-right: 7px;
+}
+
+.btn-group .btn.zeroclipboard-is-hover {
+	background-color: rgba(33, 8, 0, .9);
+}
+
+#plcb {
+	padding: 0 0 0 7px;
+}
+
+.popover.bottom>.arrow:after { /* TODO: change from #fff in custom bootstrap theme */
+	border-bottom-color: rgba(251, 250, 244, .85);
+}
+
+#root {
+	clear: both;
+	height: auto !important;
+	height: 100%;
+	margin-bottom: -30px;
+	min-height: 100%;
+	padding: 30px;
+}
+
+#root #root_footer {
+	height: 30px;
+}
+
+#in {
+	background: rgba(251, 250, 244, .85);
+	border: 1px solid #766447;
+	border-radius:0; /* otherwise iOS forces rounded corners */
+	box-shadow: inset 0 0 10px #766447;
+	color: rgba(75, 48, 20, .4);
+	display: block;
+	font-size: 24px;
+	min-height: 130px;
+	padding: 30px;
+	text-align: center;
+	text-shadow: 0 1px 0 rgba(251, 250, 244, .3), 0 -1px 0 rgba(75, 48, 20, .7);
+	transition: all .25s;
+	width: 100%;
+}
+
+@media only screen and (max-width: 480px) {
+	#in {
+		font-size: 19px;
+		padding-bottom: 10px;
+		padding-top: 10px;
+	}
+	.btn-primary {
+		font-size: 19px;
+		padding-bottom: 5px;
+		padding-top: 5px;
+	}
+	#footer a {
+		text-shadow: 0 1px 0 rgba(251, 250, 244, .5) !important;
+	}
+}
+
+#in:invalid, input[type=url] {
+	background: rgba(251, 250, 244, .75);
+}
+
+#in::-webkit-input-placeholder {
+	color: transparent;
+	text-shadow: 0 1px 0 rgba(251, 250, 244, .3), 0 -1px 0 rgba(75, 48, 20, .7);
+}
+
+#in:-moz-placeholder {
+	color: transparent;
+	text-shadow: 0 1px 0 rgba(251, 250, 244, .3), 0 -1px 0 rgba(75, 48, 20, .7);
+}
+
+#in::-moz-placeholder {
+	color: transparent;
+	text-shadow: 0 1px 0 rgba(251, 250, 244, .3), 0 -1px 0 rgba(75, 48, 20, .7);
+}
+
+#in:-ms-input-placeholder {
+	color: transparent;
+	text-shadow: 0 1px 0 rgba(251, 250, 244, .3), 0 -1px 0 rgba(75, 48, 20, .7);
+}
+
+#debug {
+	background: rgba(251, 250, 244, .5);
+	box-shadow: inset 0 0 10px #766447;
+	padding: 10px;
+	text-align: left;
+}
+
+#footer {
+	clear: both;
+	height: 30px;
+	padding: 0 30px 10px;
+	position: relative;
+}
+
+#footer a {
+	color: transparent;
+	font-size: 16px;
+	text-decoration: none!important;
+	text-shadow: 0 1px 0 rgba(251, 250, 244, .3), 0 -1px 0 rgba(75, 48, 20, .7);
+}
+
+:focus {
+	outline: 5px auto #4b3014!important;
+	border-color: transparent;
+}
+
+::selection {
+	background: #bfb18b;
+}
+
+::-moz-selection {
+	background: #bfb18b;
+}
+/* vim: ts=2 sw=2 autoindent noexpandtab:
+ */
