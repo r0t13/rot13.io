@@ -1,14 +1,8 @@
+; vim: set ft=clojure ts=2 sw=2:
 (page "index.html"
-  (:require [clojure.string :refer [blank? join]]))
+  (:require [clojure.string :refer [blank? split]]))
 
-;; see https://github.com/tailrecursion/hoplon/blob/master/src/tailrecursion/hoplon/util.cljs#L22
-;; for a way to do something likes this continuously with polling
-(defc debug? false)
-(with-init!
-  (when (= (-> js/window .-location .-search) "?debug")
-    (swap! debug? not)))
-
-(defn make-rot13 [start]
+(defn- make-rot13 [start]
   (->> (for [from (range 26),
              :let [to (mod (+ 13 from) 26)]]
          [(char (+ start from)) (char (+ start to))])
@@ -18,45 +12,179 @@
   (defn rot13 [s]
     (get table s s)))
 
-(def prompt "Put your secret in the box")
-(defc in prompt)
-(defc= out (apply str (map rot13 in)))
+(defc in "")
+(defc permalink "")
+(defc mailto-link "")
+(defc tweet-link "")
+(defc app-state :awaiting-submit) ; :awaiting-submit -> :encrypting -> :submitted
+(defc can-copy? false)
+(defc debug? false)
+
+(defc= show-buttons? (= :submitted app-state))
+(defc= btn-row-class-map {:fadeIn show-buttons? :fadeOut (not show-buttons?)})
+
+(def ^:const cp-button-id "cp")
+
+(def $input-el nil) ; work around "Use of undeclared Var" warning
+(def input-el (textarea :placeholder "Put your secret in the box"
+                        :autofocus 1 :required 1 :value in :id "in"
+                        :disabled (cell= (= app-state :encrypting))
+                        :input #(do (reset! in @%)
+                                    (reset! app-state :awaiting-submit)
+                                    (.autosize $input-el))))
+(set! $input-el (js/jQuery input-el))
+
+(defn jq-sel-id [id]
+  (js/jQuery (str "#" id)))
+
+(defn get-by-id [id]
+  (.get (jq-sel-id id)))
+
+(def ^:const permalink-popover-id "plpo")
+(def ^:const permalink-url-input-id "plui")
+(def ^:const permalink-cp-button-id "plcb")
+(def permalink-cp-inited false)
+
+(defn permalink-popover-content []
+  (div :class "animated fadeIn"
+    (input :type "url" :id permalink-url-input-id :readonly 1 :value (cell= permalink))
+      (a :class "btn btn-xs" :id permalink-cp-button-id :toggle can-copy?
+         :title "copy" :data-clipboard-text (cell= permalink)
+         (span :class "octicon octicon-clippy"))))
+
+;; query parameters
+(def ^:const qp-in "i")
+(def ^:const qp-debug "debug")
+
+(def encrypt nil) ; work around "Use of undeclared Var" warning
+(defn process-qp-in [value]
+  (reset! in (js/decodeURIComponent value))
+  (encrypt))
+
+(defn process-qp-debug [value]
+  (reset! debug? (contains? #{"t" "true" "1" ""} value)))
+
+(def ^:const qp-processors {qp-in process-qp-in qp-debug process-qp-debug})
+
+; TODO: use http://docs.closure-library.googlecode.com/git/class_goog_Uri_QueryData.html ?
+(defn process-query-str []
+  (dorun
+    (for [param-str (-> js/window .-location .-search (subs 1) (split #"&")),
+          :let [paramkv (split param-str #"=")
+                paramk (first paramkv)
+                paramv (if (= 2 (count paramkv)) (last paramkv) "")
+                processor (qp-processors paramk)]]
+      (if processor (processor paramv)))))
+
+(defn get-permalink []
+  (str (.-protocol js/location) "//" (.-host js/location) (.-pathname js/location)
+       "?" qp-in "=" (js/encodeURIComponent @in)))
+
+(defn get-mailto-link []
+  (str "mailto:?subject=secret%20message%20(shhh)&body="
+       (js/encodeURIComponent (str "secret message:\n" @in "\n\ndecode at:\n" (get-permalink)))))
+
+(defn get-tweet-link []
+  (let [max-length 105
+        hashtag "rot13"
+        msg (str (if (> (count @in) max-length)
+              (str (subs @in 0 max-length) "...")
+              @in) (if hashtag (str " #" hashtag)))
+        uri-encoded (js/encodeURIComponent msg)]
+    (str "https://twitter.com/intent/tweet?"
+         "text=" uri-encoded
+         "&url="  (js/encodeURIComponent (get-permalink)))))
+
+(set!
+ encrypt
+ #(do
+    (reset! app-state :encrypting)
+    (reset! in (apply str (map rot13 @in)))
+    (reset! app-state :submitted)
+    (reset! permalink (get-permalink))
+    (reset! tweet-link (get-tweet-link))
+    (reset! mailto-link (get-mailto-link))))
+
+(defn init-widgets []
+  (.autosize $input-el)
+
+  ; init ZeroClipboard client for main copy button
+  (when-not (.isFlashUnusable js/ZeroClipboard)
+    (reset! can-copy? true)
+    (js/ZeroClipboard. (get-by-id cp-button-id)))
+
+  ; TODO: hide when app-state transitions from :submitted to :awaiting-submit
+  (let [po-el (jq-sel-id permalink-popover-id)]
+    (.popover po-el
+              (js-obj
+               "container" "body"
+               "content" permalink-popover-content
+               "html" true
+               "placement" "bottom"
+               ))
+    (.on po-el "shown.bs.popover"
+         #(do
+           (.select (jq-sel-id permalink-url-input-id)) ; TODO: why isn't this working?
+           (if (and (not permalink-cp-inited) @can-copy?)
+             (let [permalink-cp-button (get-by-id permalink-cp-button-id)]
+               (js/ZeroClipboard. permalink-cp-button)
+               (set! permalink-cp-inited true)))))))
+
+(with-init!
+  (process-query-str)
+  (init-widgets))
+
+(.addEventListener js/window "popstate" process-query-str)
 
 (html
   (head
     (meta :http-equiv "X-UA-Compatible" :content "IE=edge")
     (meta :name "description" :content "rot13")
     (meta :name "viewport" :content "width=device-width, initial-scale=1")
-    (link :rel "stylesheet" :href "https://netdna.bootstrapcdn.com/bootswatch/3.2.0/slate/bootstrap.min.css")
-    (link :rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Cinzel:700")
+    (link :rel "stylesheet" :href "bootstrap-custom.min.css")
     (link :rel "stylesheet" :href "main.css")
-    (title "rot13!"))
+    (link :rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Cinzel:700")
+    (link :rel "stylesheet" :href "https://cdnjs.cloudflare.com/ajax/libs/octicons/2.0.2/octicons.min.css")
+    (link :rel "stylesheet" :href "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.1.0/css/font-awesome.min.css")
+    (link :rel "stylesheet" :href "https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.0/animate.min.css")
+    (title "rot13.io: Roman military grade encryption"))
   (body
     (div :id "root"
-      (div
-        (textarea :placeholder prompt :autofocus 1 :required 1
-                  :id "in" :value in :input #(reset! in @%))
-        (button :class "btn btn-primary btn-block btn-lg"
-                :click #(do (reset! in @out)                         
-                            (.select (.focus (js/jQuery "#in"))))
-                :disabled (cell= (blank? in))
-                "rot13!"))
-      (div :toggle debug? (br) (pre (text "[debug]\nin: ~{in}\nout: ~{out}"))))
-      (div :id "root_footer")
-    (div :id "footer"
+      (div :id "title" :class "animated fadeIn"
+        (h1 "rot13.io")
+        (h3 "Roman military grade encryption"))
+      (div :id "main" :class "animated fadeInDownBig"
+        input-el
+        (button :class "btn btn-primary btn-lg btn-block"
+                :disabled (cell= (or (= app-state :encrypting) (blank? in))) :click encrypt
+                (text (get {:encrypting "encrypting..."} app-state "rot13")))
+        (div :class "animated btn-group btn-group-sm" :do-class btn-row-class-map
+          (a :class "btn" :id cp-button-id
+             :data-clipboard-text (cell= in)
+             :disabled (cell= (= false can-copy?))
+             (span :class "octicon octicon-clippy") "copy")
+          (a :class "btn" :id permalink-popover-id
+             (span :class "octicon octicon-link") "link")
+          (a :class "btn" :href (cell= mailto-link)
+             (span :class "octicon octicon-mail") "email")
+          (a :class "btn" :href (cell= tweet-link) :target "_blank"
+             (span :class "fa fa-twitter") "tweet"))
+        (div :toggle debug? (br) (pre :id "debug" (text "[~(name app-state)] ~{in}\n~{permalink}"))))
+      (div :id "root_footer"))
+    (div :id "footer" :class "animated fadeInUpBig"
       (div :class "pull-left"
-        (a :href "https://en.wikipedia.org/wiki/Rot13" "what is this?"))
+        (a :target "_blank" :href "https://en.wikipedia.org/wiki/Rot13" "what is this?"))
       (div :class "pull-right"
-        (a :href "https://github.com/r0t13/rot13.io" :class "icon"
-          (i :class "icon-github"))))
+        (a :target "_blank" :href "https://github.com/r0t13/rot13.io"
+          (span :class "octicon octicon-mark-github"))))
     (script
-            ;;{{
-            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-            ga('create', 'UA-46653299-1', 'rot13.io');
-            ga('require', 'linkid', 'linkid.js');
-            ga('send','pageview');
-            ;;}}
+;;{{
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'UA-46653299-1', 'rot13.io');
+ga('require', 'linkid', 'linkid.js');
+ga('send','pageview');
+;;}}
      )))
